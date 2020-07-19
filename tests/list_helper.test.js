@@ -60,7 +60,7 @@ describe('favorite blog', () => {
   ]
 
   test('when list has multiple blogs with same number of likes, return the first in alphabetical order of title', () => {
-    const result = listHelper.favoriteBlog(listWithManyBlogs)
+    const result = listHelper.favoriteBlog(listWithManyBlogsWithEqualLikes)
     expect(result).toEqual(listWithManyBlogs[2])
   })
 })

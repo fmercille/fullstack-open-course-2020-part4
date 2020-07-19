@@ -13,7 +13,7 @@ const favoriteBlog = (blogs) => {
 
   const favoriteBlog = blogs.reduce((fav, blog) => {
     if (blog.likes === fav.likes) {
-      return (blog.name < fav.name ? blog : fav)
+      return (blog.title < fav.title ? blog : fav)
     } else {
       return (blog.likes > fav.likes ? blog : fav)
     }
