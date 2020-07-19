@@ -1,0 +1,19 @@
+{
+  "name": "blog-list",
+  "version": "1.0.0",
+  "description": "Node.js application for Part 4 of the Full Stack Open 2020 course",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fmercille/fullstack-open-course-2020-part4.git"
+  },
+  "author": "Frédéric Mercille",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fmercille/fullstack-open-course-2020-part4/issues"
+  },
+  "homepage": "https://github.com/fmercille/fullstack-open-course-2020-part4#readme"
+}
