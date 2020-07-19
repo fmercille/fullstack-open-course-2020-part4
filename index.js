@@ -5,6 +5,7 @@ const mongoose = require('mongoose')
 const morgan = require('morgan')
 const config = require('./utils/config')
 const logger = require('./utils/logger')
+const middleware = require('./utils/middleware')
 const blogsRouter = require('./controllers/blogs')
 
 const mongoUrl = config.MONGODB_URI
@@ -23,6 +24,9 @@ morgan.token('body', function (req) { return JSON.stringify(req.body) })
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
 app.use('/api/blogs', blogsRouter)
+
+app.use(middleware.unknownEndpoint)
+app.use(middleware.errorHandler)
 
 app.listen(config.PORT, () => {
   logger.info(`Server running on port ${config.PORT}`)
