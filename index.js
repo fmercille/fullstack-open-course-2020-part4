@@ -4,6 +4,7 @@ const app = express()
 const cors = require('cors')
 const mongoose = require('mongoose')
 const morgan = require('morgan')
+const logger = require('./utils/logger')
 
 
 const blogSchema = mongoose.Schema({
@@ -16,13 +17,13 @@ const blogSchema = mongoose.Schema({
 const Blog = mongoose.model('Blog', blogSchema)
 
 const mongoUrl = process.env.MONGODB_URI
-console.log('Connecting to', mongoUrl)
+logger.info('Connecting to', mongoUrl)
 mongoose.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
-    console.log('Connected to MongoDB')
+    logger.info('Connected to MongoDB')
   })
   .catch((error) => {
-    console.log('Error connecting to MongoDB:', error.message)
+    logger.info('Error connecting to MongoDB:', error.message)
   })
 
 
@@ -52,5 +53,5 @@ app.post('/api/blogs', (request, response) => {
 
 const PORT = 3001
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
+  logger.info(`Server running on port ${PORT}`)
 })
