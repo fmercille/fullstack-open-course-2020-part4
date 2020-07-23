@@ -21,8 +21,11 @@ mongoose.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true })
 
 app.use(cors())
 app.use(express.json())
-morgan.token('body', function (req) { return JSON.stringify(req.body) })
-app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
+
+if (config.NODE_ENV !== 'test') {
+  morgan.token('body', function (req) { return JSON.stringify(req.body) })
+  app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
+}
 
 app.use('/api/blogs', blogsRouter)
 

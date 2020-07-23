@@ -91,6 +91,25 @@ describe('blog API - POST /', () => {
   })
 })
 
+describe('blog API - DELETE /:id', () => {
+  test('Delete a non existing blog returns nothing', async () => {
+    const id = await helper.nonExistingId()
+    await api.delete(`${BASE_PATH}/${id}`)
+      .expect(204)
+  })
+
+  test('Delete a blog removes it from the list and returns it', async () => {
+    const responseBeforeDelete = await api.get(`${BASE_PATH}/`)
+    const blogToRemove = responseBeforeDelete.body[0]
+    const deleteResponse = await api.delete(`${BASE_PATH}/${blogToRemove.id}`)
+    expect(deleteResponse.status).toBe(200)
+    expect(deleteResponse.header['content-type']).toMatch(/application\/json/)
+    expect(deleteResponse.body).toEqual(blogToRemove)
+    const responseAfterDelete = await api.get(`${BASE_PATH}/`)
+    expect(responseAfterDelete.body).not.toContainEqual(blogToRemove)
+  })
+})
+
 afterAll(() => {
   mongoose.connection.close()
 })
