@@ -62,8 +62,8 @@ describe('blog API - POST /', () => {
     }
 
     const postResponse = await api.post(`${BASE_PATH}/`).send(newBlog)
-    const response = await api.get(`${BASE_PATH}/`)
-    expect(response.body).toContainEqual({ id: postResponse.body.id, likes: 0, ...newBlog })
+    const blogs = await helper.blogsInDb()
+    expect(blogs).toContainEqual({ id: postResponse.body.id, likes: 0, ...newBlog })
   })
 
   test('blog created with missing title fails', async () => {
@@ -99,14 +99,14 @@ describe('blog API - DELETE /:id', () => {
   })
 
   test('Delete a blog removes it from the list and returns it', async () => {
-    const responseBeforeDelete = await api.get(`${BASE_PATH}/`)
-    const blogToRemove = responseBeforeDelete.body[0]
+    const blogsInDbBefore = await helper.blogsInDb()
+    const blogToRemove = blogsInDbBefore[0]
     const deleteResponse = await api.delete(`${BASE_PATH}/${blogToRemove.id}`)
     expect(deleteResponse.status).toBe(200)
     expect(deleteResponse.header['content-type']).toMatch(/application\/json/)
     expect(deleteResponse.body).toEqual(blogToRemove)
-    const responseAfterDelete = await api.get(`${BASE_PATH}/`)
-    expect(responseAfterDelete.body).not.toContainEqual(blogToRemove)
+    const blogsInDbAfter = await helper.blogsInDb()
+    expect(blogsInDbAfter).not.toContainEqual(blogToRemove)
   })
 })
 
@@ -125,8 +125,8 @@ describe('blog API - PUT /:id', () => {
   })
 
   test('Update an existing blog updates it', async () => {
-    const responseBeforeUpdate = await api.get(`${BASE_PATH}/`)
-    const blogToUpdate = responseBeforeUpdate.body[0]
+    const blogsInDbBefore = await helper.blogsInDb()
+    const blogToUpdate = blogsInDbBefore[0]
     blogToUpdate.likes = 3
     const response = await api.put(`${BASE_PATH}/${blogToUpdate.id}`)
       .send(blogToUpdate)
@@ -134,8 +134,8 @@ describe('blog API - PUT /:id', () => {
       .expect('Content-Type', /application\/json/)
 
     expect(response.body.likes).toBe(3)
-    const responseAfterUpdate = await api.get(`${BASE_PATH}/`)
-    expect(responseAfterUpdate.body).toContainEqual(blogToUpdate)
+    const blogsInDbAfter = await helper.blogsInDb()
+    expect(blogsInDbAfter).toContainEqual(blogToUpdate)
   })
 })
 
