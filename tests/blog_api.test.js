@@ -53,6 +53,18 @@ describe('blog API - POST /', () => {
     expect(response.body).toHaveLength(helper.initialBlogs.length + 1)
     expect(response.body).toContainEqual({ id: postResponse.body.id, ...newBlog })
   })
+
+  test('blog created with no likes defaults to zero', async () => {
+    const newBlog = {
+      title: 'My Awesome Blog',
+      author: 'John McFoobar',
+      url: 'https://www.example.net/blog',
+    }
+
+    const postResponse = await api.post(`${BASE_PATH}/`).send(newBlog)
+    const response = await api.get(`${BASE_PATH}/`)
+    expect(response.body).toContainEqual({ id: postResponse.body.id, likes: 0, ...newBlog })
+  })
 })
 
 afterAll(() => {
