@@ -65,6 +65,30 @@ describe('blog API - POST /', () => {
     const response = await api.get(`${BASE_PATH}/`)
     expect(response.body).toContainEqual({ id: postResponse.body.id, likes: 0, ...newBlog })
   })
+
+  test('blog created with missing title fails', async () => {
+    const newBlog = {
+      author: 'John McFoobar',
+      url: 'https://www.example.net/blog',
+      likes: 9001
+    }
+
+    await api.post(`${BASE_PATH}/`)
+      .send(newBlog)
+      .expect(400)
+  })
+
+  test('blog created with missing url fails', async () => {
+    const newBlog = {
+      title: 'My Awesome Blog',
+      author: 'John McFoobar',
+      likes: 9001
+    }
+
+    await api.post(`${BASE_PATH}/`)
+      .send(newBlog)
+      .expect(400)
+  })
 })
 
 afterAll(() => {
