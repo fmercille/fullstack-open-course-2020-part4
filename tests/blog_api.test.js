@@ -110,6 +110,35 @@ describe('blog API - DELETE /:id', () => {
   })
 })
 
+describe('blog API - PUT /:id', () => {
+  test('Update a non existing blog fails', async () => {
+    const id = await helper.nonExistingId()
+    const blogToUpdate = {
+      title: 'Does not exist',
+      url: 'http://localhost',
+      author: 'Nobody',
+      likes: 3
+    }
+    await api.put(`${BASE_PATH}/${id}`)
+      .send(blogToUpdate)
+      .expect(404)
+  })
+
+  test('Update an existing blog updates it', async () => {
+    const responseBeforeUpdate = await api.get(`${BASE_PATH}/`)
+    const blogToUpdate = responseBeforeUpdate.body[0]
+    blogToUpdate.likes = 3
+    const response = await api.put(`${BASE_PATH}/${blogToUpdate.id}`)
+      .send(blogToUpdate)
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+
+    expect(response.body.likes).toBe(3)
+    const responseAfterUpdate = await api.get(`${BASE_PATH}/`)
+    expect(responseAfterUpdate.body).toContainEqual(blogToUpdate)
+  })
+})
+
 afterAll(() => {
   mongoose.connection.close()
 })
