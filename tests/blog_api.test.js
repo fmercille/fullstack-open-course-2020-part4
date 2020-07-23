@@ -107,6 +107,7 @@ describe('blog API - DELETE /:id', () => {
     expect(deleteResponse.body).toEqual(blogToRemove)
     const blogsInDbAfter = await helper.blogsInDb()
     expect(blogsInDbAfter).not.toContainEqual(blogToRemove)
+    expect(blogsInDbAfter).toHaveLength(blogsInDbBefore.length - 1)
   })
 })
 
