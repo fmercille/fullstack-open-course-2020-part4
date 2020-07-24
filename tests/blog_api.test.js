@@ -15,6 +15,10 @@ beforeEach(async () => {
   await Promise.all(promiseArray)
 })
 
+afterAll(() => {
+  mongoose.connection.close()
+})
+
 describe('blog API - GET /', () => {
   test('blogs are returned as json', async () => {
     await api
@@ -138,8 +142,4 @@ describe('blog API - PUT /:id', () => {
     const blogsInDbAfter = await helper.blogsInDb()
     expect(blogsInDbAfter).toContainEqual(blogToUpdate)
   })
-})
-
-afterAll(() => {
-  mongoose.connection.close()
 })
