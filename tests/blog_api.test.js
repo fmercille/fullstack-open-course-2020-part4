@@ -50,7 +50,9 @@ describe('blog API - POST /', () => {
 
     const response = await api.get(`${BASE_PATH}/`)
     expect(response.body).toHaveLength(helper.initialBlogs.length + 1)
-    expect(response.body).toContainEqual({ id: postResponse.body.id, ...newBlog })
+    const firstUser = (await helper.usersInDb())[0]
+    const firstUserObject = { id: firstUser.id, username: firstUser.username, name: firstUser.name }
+    expect(response.body).toContainEqual({ id: postResponse.body.id, user: firstUserObject, ...newBlog })
   })
 
   test('blog created with no likes defaults to zero', async () => {
@@ -62,7 +64,9 @@ describe('blog API - POST /', () => {
 
     const postResponse = await api.post(`${BASE_PATH}/`).send(newBlog)
     const blogs = await helper.blogsInDb()
-    expect(blogs).toContainEqual({ id: postResponse.body.id, likes: 0, ...newBlog })
+    const firstUser = (await helper.usersInDb())[0]
+
+    expect(blogs).toContainEqual({ id: postResponse.body.id, user: mongoose.Types.ObjectId(firstUser.id), likes: 0, ...newBlog })
   })
 
   test('blog created with missing title fails', async () => {
