@@ -3,8 +3,10 @@ const supertest = require('supertest')
 const app = require ('../app')
 const api = supertest(app)
 const helper = require('./test_helper')
+const User = require('../models/user')
 
 const BASE_PATH = '/api/blogs'
+const LOGIN_PATH = '/api/login'
 
 beforeEach(async () => {
   await helper.populateUsersAndBlogs()
@@ -13,6 +15,19 @@ beforeEach(async () => {
 afterAll(() => {
   mongoose.connection.close()
 })
+
+const login = async () => {
+  const credentials = {
+    'username': 'foobar1',
+    'password': 'password1'
+  }
+
+  const postResponse = await api.post(`${LOGIN_PATH}/`).send(credentials)
+  const token = postResponse.body.token
+  const userObject = (await User.find({ 'username': credentials.username }))[0]
+  const user = { id: String(userObject._id), name: userObject.name, username: userObject.username }
+  return { token, user }
+}
 
 describe('blog API - GET /', () => {
   test('blogs are returned as json', async () => {
@@ -43,16 +58,20 @@ describe('blog API - POST /', () => {
       likes: 9001
     }
 
-    const postResponse = await api.post(`${BASE_PATH}/`).send(newBlog)
+    const { token, user } = await login()
+    const userBlogsBefore = (await User.findById(user.id)).blogs
+    const postResponse = await api.post(`${BASE_PATH}/`).set('Authorization', `Bearer ${token}`).send(newBlog)
     expect(postResponse.status).toBe(201)
     expect(postResponse.header['content-type']).toMatch(/application\/json/)
     expect(postResponse.body.id).toBeDefined()
 
     const response = await api.get(`${BASE_PATH}/`)
     expect(response.body).toHaveLength(helper.initialBlogs.length + 1)
-    const firstUser = (await helper.usersInDb())[0]
-    const firstUserObject = { id: firstUser.id, username: firstUser.username, name: firstUser.name }
-    expect(response.body).toContainEqual({ id: postResponse.body.id, user: firstUserObject, ...newBlog })
+    expect(response.body).toContainEqual({ id: postResponse.body.id, user, ...newBlog })
+
+    // Ensure that the new blog was also linked in the user collection
+    const userBlogsAfter = (await User.findById(user.id)).blogs
+    expect(userBlogsAfter.length).toBe(userBlogsBefore.length + 1)
   })
 
   test('blog created with no likes defaults to zero', async () => {
@@ -62,11 +81,25 @@ describe('blog API - POST /', () => {
       url: 'https://www.example.net/blog',
     }
 
-    const postResponse = await api.post(`${BASE_PATH}/`).send(newBlog)
+    const { token, user } = await login()
+    const postResponse = await api.post(`${BASE_PATH}/`).set('Authorization', `Bearer ${token}`).send(newBlog)
     const blogs = await helper.blogsInDb()
-    const firstUser = (await helper.usersInDb())[0]
 
-    expect(blogs).toContainEqual({ id: postResponse.body.id, user: mongoose.Types.ObjectId(firstUser.id), likes: 0, ...newBlog })
+    expect(blogs).toContainEqual({ id: postResponse.body.id, user: mongoose.Types.ObjectId(user.id), likes: 0, ...newBlog })
+  })
+
+  test('create new blog without login fails', async () => {
+    const newBlog = {
+      title: 'My Awesome Blog',
+      author: 'John McFoobar',
+      url: 'https://www.example.net/blog',
+      likes: 9001
+    }
+
+    const postResponse = await api.post(`${BASE_PATH}/`).send(newBlog)
+    expect(postResponse.status).toBe(401)
+    expect(postResponse.header['content-type']).toMatch(/application\/json/)
+    expect(postResponse.body.error).toBeDefined()
   })
 
   test('blog created with missing title fails', async () => {
@@ -76,8 +109,10 @@ describe('blog API - POST /', () => {
       likes: 9001
     }
 
+    const { token } = await login()
     await api.post(`${BASE_PATH}/`)
       .send(newBlog)
+      .set('Authorization', `Bearer ${token}`)
       .expect(400)
   })
 
@@ -88,8 +123,10 @@ describe('blog API - POST /', () => {
       likes: 9001
     }
 
+    const { token } = await login()
     await api.post(`${BASE_PATH}/`)
       .send(newBlog)
+      .set('Authorization', `Bearer ${token}`)
       .expect(400)
   })
 })
