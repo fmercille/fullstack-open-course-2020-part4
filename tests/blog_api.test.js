@@ -3,16 +3,11 @@ const supertest = require('supertest')
 const app = require ('../app')
 const api = supertest(app)
 const helper = require('./test_helper')
-const Blog = require('../models/blog')
 
 const BASE_PATH = '/api/blogs'
 
 beforeEach(async () => {
-  await Blog.deleteMany({})
-
-  const blogObjects = helper.initialBlogs.map(blog => new Blog(blog))
-  const promiseArray = blogObjects.map(blog => blog.save())
-  await Promise.all(promiseArray)
+  await helper.populateUsersAndBlogs()
 })
 
 afterAll(() => {
@@ -108,7 +103,8 @@ describe('blog API - DELETE /:id', () => {
     const deleteResponse = await api.delete(`${BASE_PATH}/${blogToRemove.id}`)
     expect(deleteResponse.status).toBe(200)
     expect(deleteResponse.header['content-type']).toMatch(/application\/json/)
-    expect(deleteResponse.body).toEqual(blogToRemove)
+    let { user, ...expectedObject } = blogToRemove // Removing the user reference because the array of models doesn't expand it how we would expect
+    expect(deleteResponse.body).toMatchObject(expectedObject)
     const blogsInDbAfter = await helper.blogsInDb()
     expect(blogsInDbAfter).not.toContainEqual(blogToRemove)
     expect(blogsInDbAfter).toHaveLength(blogsInDbBefore.length - 1)

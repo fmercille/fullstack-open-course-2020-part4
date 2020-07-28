@@ -2,27 +2,12 @@ const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
 const api = supertest(app)
-const bcrypt = require('bcrypt')
 const helper = require('./test_helper')
-const User = require('../models/user')
 
 const BASE_PATH = '/api/users'
 
-let initialUsers = []
-
 beforeEach(async () => {
-  await User.deleteMany({})
-
-  initialUsers = [
-    { _id: '5a422a851b54a006234d17f1', username: 'root', name: 'root', passwordHash: await bcrypt.hash('passwordroot', 10) },
-    { _id: '5a422a851b54a006234d17f2', username: 'foobar1', name: 'Test User1', passwordHash: await bcrypt.hash('password1', 10) },
-    { _id: '5a422a851b54a006234d17f3', username: 'foobar2', name: 'Test User2', passwordHash: await bcrypt.hash('password2', 10) },
-    { _id: '5a422a851b54a006234d17f4', username: 'foobar3', name: 'Test User3', passwordHash: await bcrypt.hash('password3', 10) }
-  ]
-
-  const userObjects = initialUsers.map(user => new User(user))
-  const promiseArray = userObjects.map(user => user.save())
-  await Promise.all(promiseArray)
+  await helper.populateUsersAndBlogs()
 })
 
 afterAll(() => {
@@ -40,7 +25,7 @@ describe('user API - GET /', () => {
   test('all users are returned', async () => {
     const response = await api.get(`${BASE_PATH}/`)
 
-    expect(response.body).toHaveLength(initialUsers.length)
+    expect(response.body).toHaveLength(helper.initialUsers.length)
   })
 })
 
@@ -99,7 +84,7 @@ describe('user API - POST /', () => {
 
   test('create user with existing username fails', async () => {
     const newUser = {
-      username: initialUsers[1].username,
+      username: helper.initialUsers[1].username,
       name: 'Test User',
       password: 'password123',
     }
