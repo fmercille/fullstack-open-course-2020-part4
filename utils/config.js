@@ -8,8 +8,11 @@ if (NODE_ENV === 'test') {
   MONGODB_URI = process.env.TEST_MONGODB_URI
 }
 
+let SECRET = process.env.SECRET
+
 module.exports = {
   MONGODB_URI,
   NODE_ENV,
-  PORT
+  PORT,
+  SECRET
 }
