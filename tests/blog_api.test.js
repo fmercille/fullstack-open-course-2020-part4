@@ -132,19 +132,39 @@ describe('blog API - POST /', () => {
 })
 
 describe('blog API - DELETE /:id', () => {
-  test('Delete a non existing blog returns nothing', async () => {
+  test('delete a non existing blog returns nothing', async () => {
     const id = await helper.nonExistingId()
     await api.delete(`${BASE_PATH}/${id}`)
       .expect(204)
   })
 
-  test('Delete a blog removes it from the list and returns it', async () => {
-    const blogsInDbBefore = await helper.blogsInDb()
-    const blogToRemove = blogsInDbBefore[0]
+  test('delete without login fails', async() => {
+    const allBlogs = await helper.blogsInDb()
+    const blogToRemove = allBlogs[0]
     const deleteResponse = await api.delete(`${BASE_PATH}/${blogToRemove.id}`)
+    expect(deleteResponse.status).toBe(401)
+    expect(deleteResponse.header['content-type']).toMatch(/application\/json/)
+    expect(deleteResponse.error).toBeDefined()
+  })
+
+  test('delete from wrong user fails', async() => {
+    const { token, user } = await login()
+    const blogs = await helper.blogsInDb()
+    const blogToRemove = blogs.find(blog => blog.user.toString() !== user.id)
+    const deleteResponse = await api.delete(`${BASE_PATH}/${blogToRemove.id}`).set('Authorization', `Bearer ${token}`)
+    expect(deleteResponse.status).toBe(401)
+    expect(deleteResponse.header['content-type']).toMatch(/application\/json/)
+    expect(deleteResponse.error).toBeDefined()
+  })
+
+  test('delete a blog removes it from the list and returns it', async () => {
+    const { token, user } = await login()
+    const blogsInDbBefore = await helper.blogsInDb()
+    const blogToRemove = blogsInDbBefore.find(blog => blog.user.toString() === user.id)
+    const deleteResponse = await api.delete(`${BASE_PATH}/${blogToRemove.id}`).set('Authorization', `Bearer ${token}`)
     expect(deleteResponse.status).toBe(200)
     expect(deleteResponse.header['content-type']).toMatch(/application\/json/)
-    let { user, ...expectedObject } = blogToRemove // Removing the user reference because the array of models doesn't expand it how we would expect
+    let { user: u, ...expectedObject } = blogToRemove // Removing the user reference because the array of models doesn't expand it how we would expect
     expect(deleteResponse.body).toMatchObject(expectedObject)
     const blogsInDbAfter = await helper.blogsInDb()
     expect(blogsInDbAfter).not.toContainEqual(blogToRemove)
@@ -153,7 +173,7 @@ describe('blog API - DELETE /:id', () => {
 })
 
 describe('blog API - PUT /:id', () => {
-  test('Update a non existing blog fails', async () => {
+  test('update a non existing blog fails', async () => {
     const id = await helper.nonExistingId()
     const blogToUpdate = {
       title: 'Does not exist',
@@ -166,7 +186,7 @@ describe('blog API - PUT /:id', () => {
       .expect(404)
   })
 
-  test('Update an existing blog updates it', async () => {
+  test('update an existing blog updates it', async () => {
     const blogsInDbBefore = await helper.blogsInDb()
     const blogToUpdate = blogsInDbBefore[0]
     blogToUpdate.likes = 3
